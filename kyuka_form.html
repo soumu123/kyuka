@@ -1,0 +1,503 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>休暇申請</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Hiragino Sans', 'Noto Sans JP', sans-serif;
+    background: #f5f4f0;
+    min-height: 100vh;
+    padding: 0 0 48px;
+    color: #1a1a1a;
+  }
+
+  .header {
+    background: #1a1a2e;
+    color: #fff;
+    padding: 24px 20px 20px;
+    text-align: center;
+  }
+  .header .company {
+    font-size: 11px;
+    letter-spacing: 0.15em;
+    color: #8899aa;
+    margin-bottom: 6px;
+  }
+  .header h1 {
+    font-size: 20px;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+  }
+
+  .form-body {
+    padding: 20px 16px;
+    max-width: 480px;
+    margin: 0 auto;
+  }
+
+  .card {
+    background: #fff;
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 12px;
+    border: 0.5px solid rgba(0,0,0,0.08);
+  }
+  .card-title {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    color: #888;
+    margin-bottom: 16px;
+  }
+
+  .field { margin-bottom: 16px; }
+  .field:last-child { margin-bottom: 0; }
+
+  label {
+    display: block;
+    font-size: 13px;
+    color: #555;
+    margin-bottom: 6px;
+    font-weight: 500;
+  }
+
+  input[type="text"],
+  input[type="date"],
+  input[type="email"],
+  textarea,
+  select {
+    width: 100%;
+    padding: 12px 14px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    font-size: 16px;
+    font-family: inherit;
+    background: #fafafa;
+    color: #1a1a1a;
+    appearance: none;
+    -webkit-appearance: none;
+    transition: border-color 0.15s;
+    outline: none;
+  }
+  input:focus, select:focus, textarea:focus {
+    border-color: #4a7cdc;
+    background: #fff;
+  }
+  select {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23888' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 14px center;
+    padding-right: 40px;
+  }
+  textarea {
+    resize: vertical;
+    min-height: 72px;
+    line-height: 1.5;
+  }
+
+  /* 種別ボタン：2列×2 + 1 */
+  .type-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+  .type-grid .wide {
+    grid-column: 1 / -1;
+  }
+  .type-option { position: relative; }
+  .type-option input[type="radio"] {
+    position: absolute; opacity: 0; width: 0; height: 0;
+  }
+  .type-option label {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 13px 8px;
+    border: 1.5px solid #e0e0e0;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 500;
+    color: #444;
+    transition: all 0.15s;
+    margin: 0;
+    text-align: center;
+    background: #fafafa;
+    min-height: 48px;
+    user-select: none;
+  }
+  .type-option input[type="radio"]:checked + label {
+    border-color: #4a7cdc;
+    background: #eef3fb;
+    color: #2a5aaa;
+  }
+  .type-option label:active { transform: scale(0.97); }
+
+  /* 期間入力 */
+  .date-range {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    align-items: center;
+    gap: 8px;
+  }
+  .date-range .sep {
+    font-size: 14px;
+    color: #888;
+    text-align: center;
+    white-space: nowrap;
+  }
+  .date-summary {
+    margin-top: 8px;
+    font-size: 13px;
+    color: #4a7cdc;
+    font-weight: 500;
+    min-height: 20px;
+  }
+
+  /* 半休は期間不要 → 開始日のみ表示 */
+  .single-date { display: none; }
+  .single-date.visible { display: block; }
+  .range-date { display: block; }
+  .range-date.hidden { display: none; }
+
+  .submit-btn {
+    width: 100%;
+    padding: 16px;
+    background: #1a1a2e;
+    color: #fff;
+    border: none;
+    border-radius: 12px;
+    font-size: 17px;
+    font-weight: 600;
+    font-family: inherit;
+    cursor: pointer;
+    letter-spacing: 0.05em;
+    margin-top: 8px;
+    transition: opacity 0.15s, transform 0.1s;
+  }
+  .submit-btn:active { opacity: 0.85; transform: scale(0.99); }
+  .submit-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+  .notice {
+    font-size: 12px;
+    color: #999;
+    text-align: center;
+    margin-top: 16px;
+    line-height: 1.6;
+  }
+
+  .error-msg {
+    font-size: 12px;
+    color: #e24b4a;
+    margin-top: 4px;
+    display: none;
+  }
+  .error-msg.show { display: block; }
+
+  /* モーダル */
+  .overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.5);
+    z-index: 100;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+  }
+  .overlay.show { display: flex; }
+  .dialog {
+    background: #fff;
+    border-radius: 16px;
+    padding: 28px 24px;
+    max-width: 340px;
+    width: 100%;
+    text-align: center;
+  }
+  .dialog-icon { font-size: 36px; margin-bottom: 12px; }
+  .dialog h2 { font-size: 18px; font-weight: 600; margin-bottom: 8px; color: #1a1a1a; }
+  .dialog p { font-size: 14px; color: #666; line-height: 1.6; margin-bottom: 20px; }
+  .dialog-btn {
+    width: 100%;
+    padding: 14px;
+    background: #1a1a2e;
+    color: #fff;
+    border: none;
+    border-radius: 10px;
+    font-size: 16px;
+    font-weight: 600;
+    font-family: inherit;
+    cursor: pointer;
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="company">株式会社ニホンキカイ</div>
+  <h1>休暇申請</h1>
+</div>
+
+<div class="form-body">
+
+  <!-- 本人確認 -->
+  <div class="card">
+    <div class="card-title">本人確認</div>
+
+    <div class="field">
+      <label for="name">氏名</label>
+      <input type="text" id="name" placeholder="山田 太郎" autocomplete="name">
+    </div>
+    <div class="field">
+      <label for="emp_id">社員番号</label>
+      <input type="text" id="emp_id" placeholder="例：NKK-001">
+    </div>
+    <div class="field">
+      <label for="birthdate">生年月日</label>
+      <input type="date" id="birthdate">
+    </div>
+  </div>
+
+  <!-- 申請内容 -->
+  <div class="card">
+    <div class="card-title">申請内容</div>
+
+    <!-- 種別 -->
+    <div class="field">
+      <label>休暇種別</label>
+      <div class="type-grid">
+        <div class="type-option">
+          <input type="radio" name="leave_type" id="type_paid" value="有給" checked>
+          <label for="type_paid">有給</label>
+        </div>
+        <div class="type-option">
+          <input type="radio" name="leave_type" id="type_absent" value="欠勤">
+          <label for="type_absent">欠勤</label>
+        </div>
+        <div class="type-option">
+          <input type="radio" name="leave_type" id="type_am" value="半休（午前）">
+          <label for="type_am">半休（午前）</label>
+        </div>
+        <div class="type-option">
+          <input type="radio" name="leave_type" id="type_pm" value="半休（午後）">
+          <label for="type_pm">半休（午後）</label>
+        </div>
+        <div class="type-option wide">
+          <input type="radio" name="leave_type" id="type_comp" value="代休">
+          <label for="type_comp">代休</label>
+        </div>
+      </div>
+    </div>
+
+    <!-- 日付（期間 or 1日） -->
+    <div class="field">
+      <!-- 有給・欠勤・代休：期間選択 -->
+      <div class="range-date" id="range-date">
+        <label>取得期間</label>
+        <div class="date-range">
+          <input type="date" id="date_from">
+          <span class="sep">〜</span>
+          <input type="date" id="date_to">
+        </div>
+        <div class="date-summary" id="date-summary"></div>
+      </div>
+
+      <!-- 半休：1日のみ -->
+      <div class="single-date" id="single-date">
+        <label for="date_single">取得日</label>
+        <input type="date" id="date_single">
+      </div>
+    </div>
+
+    <div class="field">
+      <label for="reason">理由（任意）</label>
+      <textarea id="reason" placeholder="私用のため / 体調不良 など"></textarea>
+    </div>
+
+    <div class="field">
+      <label for="email">通知先メールアドレス</label>
+      <input type="email" id="email" placeholder="your@email.com" inputmode="email" autocomplete="email">
+      <div class="error-msg" id="email-error">メールアドレスを正しく入力してください</div>
+    </div>
+  </div>
+
+  <button class="submit-btn" id="submit-btn" onclick="submitForm()">申請する</button>
+
+  <p class="notice">
+    申請後、総務担当者が確認・承認します。<br>
+    承認されると入力したメールアドレスへ通知が届きます。
+  </p>
+</div>
+
+<!-- 完了モーダル -->
+<div class="overlay" id="overlay">
+  <div class="dialog">
+    <div class="dialog-icon">✅</div>
+    <h2>申請を受け付けました</h2>
+    <p id="dialog-msg">担当者が確認後、メールにてお知らせします。</p>
+    <button class="dialog-btn" onclick="closeDialog()">閉じる</button>
+  </div>
+</div>
+
+<!-- エラーモーダル -->
+<div class="overlay" id="error-overlay">
+  <div class="dialog">
+    <div class="dialog-icon">⚠️</div>
+    <h2>送信に失敗しました</h2>
+    <p>しばらく時間をおいて再度お試しください。<br>解消しない場合は総務へご連絡ください。</p>
+    <button class="dialog-btn" onclick="document.getElementById('error-overlay').classList.remove('show')">閉じる</button>
+  </div>
+</div>
+
+<script>
+  const GAS_URL = "https://script.google.com/macros/s/AKfycbxgnkMxd4l9eWR-2PrDhNBkASCqeNiwz-k2NGVACmp9vQl7ozhQ_H1SCB3oHXao9sfBOg/exec";
+
+  const today = new Date().toISOString().split("T")[0];
+  document.getElementById("date_from").value = today;
+  document.getElementById("date_to").value = today;
+  document.getElementById("date_single").value = today;
+
+  const HALF_TYPES = ["半休（午前）", "半休（午後）"];
+
+  // 種別切替：半休のみ1日表示、それ以外は期間
+  document.querySelectorAll('input[name="leave_type"]').forEach(r => {
+    r.addEventListener("change", function () {
+      const isHalf = HALF_TYPES.includes(this.value);
+      document.getElementById("range-date").classList.toggle("hidden", isHalf);
+      document.getElementById("single-date").classList.toggle("visible", isHalf);
+      updateSummary();
+    });
+  });
+
+  // 期間サマリー
+  function updateSummary() {
+    const from = document.getElementById("date_from").value;
+    const to   = document.getElementById("date_to").value;
+    const el   = document.getElementById("date-summary");
+    if (!from || !to) { el.textContent = ""; return; }
+    if (from > to) { el.textContent = "終了日は開始日以降にしてください"; el.style.color = "#e24b4a"; return; }
+    el.style.color = "#4a7cdc";
+    const days = calcWorkdays(from, to);
+    el.textContent = from === to ? `${formatDate(from)}（1日）` : `${formatDate(from)} 〜 ${formatDate(to)}（${days}日間）`;
+  }
+
+  function calcWorkdays(from, to) {
+    let count = 0;
+    const d = new Date(from);
+    const end = new Date(to);
+    while (d <= end) {
+      const w = d.getDay();
+      if (w !== 0 && w !== 6) count++;
+      d.setDate(d.getDate() + 1);
+    }
+    return count;
+  }
+
+  function formatDate(str) {
+    const [y, m, d] = str.split("-");
+    return `${y}/${m}/${d}`;
+  }
+
+  document.getElementById("date_from").addEventListener("change", function () {
+    if (document.getElementById("date_to").value < this.value) {
+      document.getElementById("date_to").value = this.value;
+    }
+    updateSummary();
+  });
+  document.getElementById("date_to").addEventListener("change", updateSummary);
+
+  updateSummary();
+
+  function validateEmail(e) { return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e); }
+
+  async function submitForm() {
+    const name      = document.getElementById("name").value.trim();
+    const empId     = document.getElementById("emp_id").value.trim();
+    const birthdate = document.getElementById("birthdate").value;
+    const email     = document.getElementById("email").value.trim();
+    const leaveType = document.querySelector('input[name="leave_type"]:checked').value;
+    const reason    = document.getElementById("reason").value.trim();
+    const isHalf    = HALF_TYPES.includes(leaveType);
+
+    const dateFrom = isHalf
+      ? document.getElementById("date_single").value
+      : document.getElementById("date_from").value;
+    const dateTo = isHalf
+      ? document.getElementById("date_single").value
+      : document.getElementById("date_to").value;
+
+    document.getElementById("email-error").classList.remove("show");
+
+    if (!name || !empId || !birthdate || !dateFrom || !dateTo || !email) {
+      alert("すべての必須項目を入力してください");
+      return;
+    }
+    if (dateFrom > dateTo) {
+      alert("終了日は開始日以降の日付を選択してください");
+      return;
+    }
+    if (!validateEmail(email)) {
+      document.getElementById("email-error").classList.add("show");
+      document.getElementById("email").focus();
+      return;
+    }
+
+    const btn = document.getElementById("submit-btn");
+    btn.disabled = true;
+    btn.textContent = "送信中...";
+
+    const dateDisplay = dateFrom === dateTo
+      ? formatDate(dateFrom)
+      : `${formatDate(dateFrom)} 〜 ${formatDate(dateTo)}`;
+
+    const payload = {
+      name, empId, birthdate, leaveType,
+      dateFrom, dateTo, dateDisplay,
+      reason, email,
+      submittedAt: new Date().toLocaleString("ja-JP", { timeZone: "Asia/Tokyo" })
+    };
+
+    try {
+      await fetch(GAS_URL, {
+        method: "POST",
+        mode: "no-cors",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+      });
+
+      document.getElementById("dialog-msg").textContent =
+        `${name} さんの${leaveType}（${dateDisplay}）を受け付けました。承認後にメールをお送りします。`;
+      document.getElementById("overlay").classList.add("show");
+      clearForm();
+
+    } catch (e) {
+      document.getElementById("error-overlay").classList.add("show");
+    } finally {
+      btn.disabled = false;
+      btn.textContent = "申請する";
+    }
+  }
+
+  function clearForm() {
+    ["name","emp_id","reason","email"].forEach(id => document.getElementById(id).value = "");
+    document.getElementById("birthdate").value = "";
+    document.getElementById("date_from").value = today;
+    document.getElementById("date_to").value = today;
+    document.getElementById("date_single").value = today;
+    document.getElementById("type_paid").checked = true;
+    document.getElementById("range-date").classList.remove("hidden");
+    document.getElementById("single-date").classList.remove("visible");
+    updateSummary();
+  }
+
+  function closeDialog() {
+    document.getElementById("overlay").classList.remove("show");
+  }
+</script>
+
+</body>
+</html>
